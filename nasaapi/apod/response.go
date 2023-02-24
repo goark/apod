@@ -9,6 +9,7 @@ import (
 	"github.com/goark/errs"
 )
 
+// Response is response data from NASA APOD API.
 type Response struct {
 	Copyright      string       `json:"copyright,omitempty"`
 	Date           nasaapi.Date `json:"date,omitempty"`

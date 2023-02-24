@@ -1,15 +1,19 @@
 package facade
 
 import (
+	"fmt"
 	"runtime"
 
 	"github.com/goark/errs"
 
 	"github.com/goark/apod/ecode"
 	"github.com/goark/apod/nasaapi"
+	"github.com/goark/apod/nasaapi/apod"
+	"github.com/goark/gocli/config"
 	"github.com/goark/gocli/exitcode"
 	"github.com/goark/gocli/rwi"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -20,7 +24,10 @@ var (
 )
 
 var (
-	debugFlag bool //debug flag
+	debugFlag         bool   //debug flag
+	cfgFile           string //config file
+	configFile        = "config"
+	defaultConfigPath = config.Path(Name, configFile+".yaml")
 )
 
 // newRootCmd returns cobra.Command instance for root command
@@ -33,10 +40,29 @@ func newRootCmd(ui *rwi.RWI, args []string) *cobra.Command {
 			return debugPrint(ui, errs.Wrap(ecode.ErrNoCommand))
 		},
 	}
+	// global options (binding)
+	rootCmd.PersistentFlags().StringP("api-key", "", "", "NASA API key")
+	rootCmd.PersistentFlags().StringP("date", "", "", "date of the APOD image to retrieve (YYYY-MM-DD)")
+	rootCmd.PersistentFlags().StringP("start-date", "", "", "start of a date range (YYYY-MM-DD)")
+	rootCmd.PersistentFlags().StringP("end-date", "", "", "end of a date range (YYYY-MM-DD)")
+	rootCmd.PersistentFlags().IntP("count", "", 0, "count randomly chosen images")
+	rootCmd.PersistentFlags().BoolP("thumbs", "", false, "return the URL of video thumbnail")
+
+	//Bind config file
+	_ = viper.BindPFlag("api-key", rootCmd.PersistentFlags().Lookup("api-key"))
+	_ = viper.BindPFlag("date", rootCmd.PersistentFlags().Lookup("date"))
+	_ = viper.BindPFlag("start-date", rootCmd.PersistentFlags().Lookup("start-date"))
+	_ = viper.BindPFlag("end-date", rootCmd.PersistentFlags().Lookup("end-date"))
+	_ = viper.BindPFlag("count", rootCmd.PersistentFlags().Lookup("count"))
+	_ = viper.BindPFlag("thumbs", rootCmd.PersistentFlags().Lookup("thumbs"))
+	cobra.OnInitialize(initConfig)
+
+	// global options (other)
 	rootCmd.PersistentFlags().BoolVarP(&debugFlag, "debug", "", false, "for debug")
-	rootCmd.PersistentFlags().StringP("apikey", "", nasaapi.DefaultAPIKey, "NASA APII key")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("Config file (default %v)", defaultConfigPath))
 
 	rootCmd.SilenceUsage = true
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetArgs(args)
 	rootCmd.SetIn(ui.Reader())       //Stdin
 	rootCmd.SetOut(ui.ErrorWriter()) //Stdout -> Stderr
@@ -47,6 +73,48 @@ func newRootCmd(ui *rwi.RWI, args []string) *cobra.Command {
 	)
 
 	return rootCmd
+}
+
+func makeAPODConfig() (*apod.Context, error) {
+	date, err := nasaapi.DateFrom(viper.GetString("date"))
+	if err != nil {
+		return nil, errs.Wrap(err)
+	}
+	startDate, err := nasaapi.DateFrom(viper.GetString("start-date"))
+	if err != nil {
+		return nil, errs.Wrap(err)
+	}
+	endDate, err := nasaapi.DateFrom(viper.GetString("end-date"))
+	if err != nil {
+		return nil, errs.Wrap(err)
+	}
+	return apod.New(
+		apod.WithDate(date),
+		apod.WithStartDate(startDate),
+		apod.WithEndDate(endDate),
+		apod.WithCount(viper.GetInt("count")),
+		apod.WithThumbs(viper.GetBool("thumbs")),
+		apod.WithAPIKey(viper.GetString("api-key")),
+	), nil
+}
+
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+	if cfgFile != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// Find config directory.
+		confDir := config.Dir(Name)
+		if len(confDir) == 0 {
+			confDir = "." //current directory
+		}
+		// Search config in home directory with name ".books-data.yaml" (without extension).
+		viper.AddConfigPath(confDir)
+		viper.SetConfigName(configFile)
+	}
+	viper.AutomaticEnv()     // read in environment variables that match
+	_ = viper.ReadInConfig() // If a config file is found, read it in.
 }
 
 // Execute is called from main function

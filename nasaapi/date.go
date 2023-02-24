@@ -19,6 +19,9 @@ func NewDate(tm time.Time) Date {
 }
 
 func (t Date) String() string {
+	if t.IsZero() {
+		return ""
+	}
 	return t.Format(time.DateOnly)
 }
 
@@ -31,8 +34,8 @@ func (t Date) MarshalJSON() ([]byte, error) {
 }
 
 var timeTemplate = []string{
-	time.DateOnly,
 	time.RFC3339,
+	time.DateOnly,
 }
 
 // DateFrom returns Date instance from date string

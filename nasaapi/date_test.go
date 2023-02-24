@@ -1,49 +1,53 @@
-package lookup
+package nasaapi
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
-	"io"
-
-	"github.com/goark/apod/nasaapi/apod"
+	"testing"
 )
 
-// Lookup is configuration for lookup command.
-type Lookup struct {
-	*apod.Context
+func TestDate(t *testing.T) {
+	testCases := []struct {
+		s     string
+		isErr bool
+	}{
+		{s: "2023-02-22", isErr: false},
+		{s: "2023", isErr: true},
+		{s: "", isErr: false},
+	}
+
+	for _, tc := range testCases {
+		s, err := DateFrom(tc.s)
+		if (err != nil) != tc.isErr {
+			t.Errorf("Is \"%v\" error ? %v, want %v", tc.s, err != nil, tc.isErr)
+		}
+		if err == nil {
+			if s.String() != tc.s {
+				t.Errorf("DateFrom(\"%v\") is \"%v\" , want \"%v\"", tc.s, s, tc.s)
+			}
+		}
+	}
 }
 
-// New returns new Lookup instance.
-func New(cfg *apod.Context) *Lookup {
-	return &Lookup{cfg}
-}
+func TestDateJSON(t *testing.T) {
+	testCases := []struct {
+		s string
+	}{
+		{s: `{"date":"2023-02-22"}`},
+		{s: `{"date":""}`},
+	}
 
-// Do method is looking up APOD data from NASA API.
-func (l *Lookup) Do(ctx context.Context, rawFlag bool) (io.ReadCloser, error) {
-	if rawFlag {
-		return l.GetRawData(ctx)
+	for _, tc := range testCases {
+		var data struct {
+			Dt Date `json:"date"`
+		}
+		if err := json.Unmarshal([]byte(tc.s), &data); err != nil {
+			t.Errorf("Unmarshal(\"%v\") is %v, want nil", tc.s, err)
+		} else if b, err := json.Marshal(data); err != nil {
+			t.Errorf("Marshal(\"%v\") is %v, want nil", tc.s, err)
+		} else if string(b) != tc.s {
+			t.Errorf("Unmarshal/Marshal is \"%v\", want \"%v\"", string(b), tc.s)
+		}
 	}
-	resp, err := l.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	b, err := json.Marshal(resp)
-	if err != nil {
-		return nil, err
-	}
-	return &readClose{bytes.NewReader(b)}, nil
-}
-
-type readClose struct {
-	io.Reader
-}
-
-func (rc *readClose) Close() error {
-	if c, ok := rc.Reader.(io.Closer); ok {
-		return c.Close()
-	}
-	return nil
 }
 
 /* MIT License

@@ -9,13 +9,14 @@ import (
 	"github.com/goark/fetch"
 )
 
-const DefaultAPIKey = "DEMO_KEY"
+const DefaultAPIKey = "DEMO_KEY" // Default NASA API key (for demo)
 
 const (
 	scheme = "https"
 	host   = "api.nasa.gov"
 )
 
+// Request function requests to NASA API, and returns response data.
 func Request(ctx context.Context, path string, q url.Values) (io.ReadCloser, error) {
 	resp, err := fetch.New().Get(getURL(path, q), fetch.WithContext(ctx))
 	if err != nil {

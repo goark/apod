@@ -16,16 +16,19 @@ func newLookup(ui *rwi.RWI) *cobra.Command {
 		Short:   "Look up NASA APOD data",
 		Long:    "Look up NASA APOD data.",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// global options
+			cfg, err := makeAPODConfig()
+			if err != nil {
+				return debugPrint(ui, err)
+			}
+			// local options
 			rawFlag, err := cmd.Flags().GetBool("raw")
 			if err != nil {
 				return debugPrint(ui, err)
 			}
 
-			l, err := lookup.New("", "2023-02-22", "2023-02-22", "", 0, false)
-			if err != nil {
-				return debugPrint(ui, err)
-			}
-			r, err := l.Do(context.TODO(), rawFlag)
+			// lookup APOD data
+			r, err := lookup.New(cfg).Do(context.TODO(), rawFlag)
 			if err != nil {
 				return debugPrint(ui, err)
 			}

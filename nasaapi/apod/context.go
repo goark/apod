@@ -90,6 +90,7 @@ func WithAPIKey(apiKey string) Opts {
 	}
 }
 
+// Encode returns JSON string.
 func (apod *Context) Encode() (string, error) {
 	b, err := json.Marshal(apod)
 	if err != nil {
@@ -98,6 +99,7 @@ func (apod *Context) Encode() (string, error) {
 	return string(b), err
 }
 
+// Stringger method.
 func (apod *Context) String() string {
 	s, err := apod.Encode()
 	if err != nil {
@@ -106,6 +108,7 @@ func (apod *Context) String() string {
 	return s
 }
 
+// Get method gets APOD data from NASA API, and returns []Response instance.
 func (apod *Context) Get(ctx context.Context) ([]Response, error) {
 	resp, err := apod.GetRawData(ctx)
 	if err != nil {
@@ -115,6 +118,7 @@ func (apod *Context) Get(ctx context.Context) ([]Response, error) {
 	return decode(resp, apod.isSingle())
 }
 
+// GetRawData method gets APOD data from NASA API, and returns raw response string.
 func (apod *Context) GetRawData(ctx context.Context) (io.ReadCloser, error) {
 	q, err := apod.makeQuery()
 	if err != nil {

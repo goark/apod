@@ -1,29 +1,25 @@
 package nasaapi
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
+	"net/url"
+	"testing"
 )
 
-type Error struct {
-	Code string `json:"code"`
-	Msg  string `json:"msg"`
-}
-
-func ParseError(r io.Reader) error {
-	var e *Error
-	if err := json.NewDecoder(r).Decode(&e); err == nil {
-		if len(e.Code) == 0 {
-			return nil
-		}
-		return e
+func TestGetURL(t *testing.T) {
+	testCases := []struct {
+		path string
+		q    url.Values
+		want string
+	}{
+		{path: "/foo/bar", q: url.Values{"hoge": []string{"hage"}}, want: "https://api.nasa.gov/foo/bar?hoge=hage"},
 	}
-	return nil
-}
 
-func (e *Error) Error() string {
-	return fmt.Sprintf("%s : %s", e.Code, e.Msg)
+	for _, tc := range testCases {
+		u := getURL(tc.path, tc.q)
+		if u.String() != tc.want {
+			t.Errorf("getURL() is \"%v\" , want \"%v\"", u.String(), tc.want)
+		}
+	}
 }
 
 /* MIT License
