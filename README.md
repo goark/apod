@@ -21,7 +21,7 @@ See [latest release](https://github.com/goark/apod/releases/latest).
 
 ```
 $ apod -h
-OpenPGP (RFC 4880) packet visualizer by golang.
+CLI Tool for Astronomy Picture of the Day with NASA API.
 
 Usage:
   apod [flags]
@@ -35,7 +35,7 @@ Available Commands:
 
 Flags:
       --api-key string      NASA API key
-      --config string       Config file (default /home/spiegel/.config/apod/config.yaml)
+      --config string       Config file (default /home/username/.config/apod/config.yaml)
       --count int           count randomly chosen images
       --date string         date of the APOD image to retrieve (YYYY-MM-DD)
       --debug               for debug
@@ -71,7 +71,7 @@ Flags:
 
 Global Flags:
       --api-key string      NASA API key
-      --config string       Config file (default /home/spiegel/.config/apod/config.yaml)
+      --config string       Config file (default /home/username/.config/apod/config.yaml)
       --count int           count randomly chosen images
       --date string         date of the APOD image to retrieve (YYYY-MM-DD)
       --debug               for debug
@@ -114,7 +114,7 @@ Flags:
 
 Global Flags:
       --api-key string      NASA API key
-      --config string       Config file (default /home/spiegel/.config/apod/config.yaml)
+      --config string       Config file (default /home/username/.config/apod/config.yaml)
       --count int           count randomly chosen images
       --date string         date of the APOD image to retrieve (YYYY-MM-DD)
       --debug               for debug

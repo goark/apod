@@ -37,8 +37,8 @@ var (
 func newRootCmd(ui *rwi.RWI, args []string) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   Name,
-		Short: "OpenPGP packet visualizer",
-		Long:  "OpenPGP (RFC 4880) packet visualizer by golang.",
+		Short: "CLI Tool for Astronomy Picture of the Day with NASA API",
+		Long:  "CLI Tool for Astronomy Picture of the Day with NASA API.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return debugPrint(ui, errs.Wrap(ecode.ErrNoCommand))
 		},
