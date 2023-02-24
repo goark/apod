@@ -92,6 +92,9 @@ func WithAPIKey(apiKey string) Opts {
 
 // Encode returns JSON string.
 func (apod *Request) Encode() (string, error) {
+	if apod == nil {
+		return "", errs.Wrap(ecode.ErrNullPointer)
+	}
 	b, err := json.Marshal(apod)
 	if err != nil {
 		return "", errs.Wrap(err)
@@ -108,8 +111,11 @@ func (apod *Request) String() string {
 	return s
 }
 
-// Get method gets APOD data from NASA API, and returns []Response instance.
-func (apod *Request) Get(ctx context.Context) ([]Response, error) {
+// Get method gets APOD data from NASA API, and returns []*Response instance.
+func (apod *Request) Get(ctx context.Context) ([]*Response, error) {
+	if apod == nil {
+		return nil, errs.Wrap(ecode.ErrNullPointer)
+	}
 	resp, err := apod.GetRawData(ctx)
 	if err != nil {
 		return nil, err
@@ -120,6 +126,9 @@ func (apod *Request) Get(ctx context.Context) ([]Response, error) {
 
 // GetRawData method gets APOD data from NASA API, and returns raw response string.
 func (apod *Request) GetRawData(ctx context.Context) (io.ReadCloser, error) {
+	if apod == nil {
+		return nil, errs.Wrap(ecode.ErrNullPointer)
+	}
 	q, err := apod.makeQuery()
 	if err != nil {
 		return nil, errs.Wrap(err)
@@ -158,9 +167,6 @@ func (apod *Request) makeQuery() (url.Values, error) {
 		v.Set("end_date", apod.EndDate.Format(time.DateOnly))
 	}
 	if apod.Count > 0 {
-		if !apod.Date.IsZero() || !apod.StartDate.IsZero() || !apod.EndDate.IsZero() {
-			return nil, errs.Wrap(ecode.ErrCombination, errs.WithContext("config", apod))
-		}
 		v.Set("count", strconv.Itoa(apod.Count))
 	}
 	if apod.Thumbs {

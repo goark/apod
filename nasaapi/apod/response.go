@@ -22,8 +22,8 @@ type Response struct {
 	ThumbnailUrl   string       `json:"thumbnail_url,omitempty"`
 }
 
-func decode(r io.Reader, isSingle bool) ([]Response, error) {
-	var resps []Response
+func decode(r io.Reader, isSingle bool) ([]*Response, error) {
+	var resps []*Response
 	dec := json.NewDecoder(r)
 	if isSingle {
 		for {
@@ -34,11 +34,11 @@ func decode(r io.Reader, isSingle bool) ([]Response, error) {
 				}
 				return nil, errs.Wrap(err)
 			}
-			resps = append(resps, resp)
+			resps = append(resps, &resp)
 		}
 	} else {
 		for {
-			var resp []Response
+			var resp []*Response
 			if err := dec.Decode(&resp); err != nil {
 				if errors.Is(err, io.EOF) {
 					break

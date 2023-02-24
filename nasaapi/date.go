@@ -18,6 +18,7 @@ func NewDate(tm time.Time) Date {
 	return Date{tm}
 }
 
+// Stringer with YYYY-MM-DD format.
 func (t Date) String() string {
 	if t.IsZero() {
 		return ""

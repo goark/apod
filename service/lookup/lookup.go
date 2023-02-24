@@ -6,22 +6,28 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/goark/apod/ecode"
 	"github.com/goark/apod/nasaapi/apod"
+	"github.com/goark/errs"
 )
 
 // Lookup is configuration for lookup command.
 type Lookup struct {
 	*apod.Request
+	rawFlag bool
 }
 
 // New returns new Lookup instance.
-func New(cfg *apod.Request) *Lookup {
-	return &Lookup{cfg}
+func New(cfg *apod.Request, rawFlag bool) *Lookup {
+	return &Lookup{Request: cfg, rawFlag: rawFlag}
 }
 
 // Do method is looking up APOD data from NASA API.
-func (l *Lookup) Do(ctx context.Context, rawFlag bool) (io.ReadCloser, error) {
-	if rawFlag {
+func (l *Lookup) Do(ctx context.Context) (io.ReadCloser, error) {
+	if l == nil {
+		return nil, errs.Wrap(ecode.ErrNullPointer)
+	}
+	if l.rawFlag {
 		return l.GetRawData(ctx)
 	}
 	resp, err := l.Get(ctx)

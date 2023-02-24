@@ -1,7 +1,10 @@
 package facade
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
 	"runtime"
 
 	"github.com/goark/errs"
@@ -70,6 +73,7 @@ func newRootCmd(ui *rwi.RWI, args []string) *cobra.Command {
 	rootCmd.AddCommand(
 		newVersionCmd(ui),
 		newLookup(ui),
+		newDownload(ui),
 	)
 
 	return rootCmd
@@ -136,7 +140,9 @@ func Execute(ui *rwi.RWI, args []string) (exit exitcode.ExitCode) {
 
 	//execution
 	exit = exitcode.Normal
-	if err := newRootCmd(ui, args).Execute(); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	if err := newRootCmd(ui, args).ExecuteContext(ctx); err != nil {
 		exit = exitcode.Abnormal
 	}
 	return

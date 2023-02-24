@@ -1,42 +1,48 @@
 package facade
 
 import (
-	"github.com/goark/apod/service/lookup"
+	"context"
+
+	"github.com/goark/apod/service/download"
 	"github.com/goark/gocli/rwi"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // newVersionCmd returns cobra.Command instance for show sub-command
-func newLookup(ui *rwi.RWI) *cobra.Command {
-	lookupCmd := &cobra.Command{
-		Use:     "lookup",
-		Aliases: []string{"look", "l"},
-		Short:   "Look up NASA APOD data",
-		Long:    "Look up NASA APOD data.",
+func newDownload(ui *rwi.RWI) *cobra.Command {
+	downloadCmd := &cobra.Command{
+		Use:     "download",
+		Aliases: []string{"dl", "d"},
+		Short:   "Download NASA APOD data",
+		Long:    "Download NASA APOD data.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// global options
+			dir := viper.GetString("base-dir")
+			copyrightFlag := viper.GetBool("include-nopd")
+			overwriteFlag := viper.GetBool("overwrite")
 			cfg, err := makeAPODConfig()
 			if err != nil {
 				return debugPrint(ui, err)
 			}
-			// local options
-			rawFlag, err := cmd.Flags().GetBool("raw")
-			if err != nil {
-				return debugPrint(ui, err)
-			}
 
-			// lookup APOD data
-			r, err := lookup.New(cfg, rawFlag).Do(cmd.Context())
-			if err != nil {
+			// download APOD data
+			if err := download.New(cfg, dir, copyrightFlag, overwriteFlag).Do(context.TODO()); err != nil {
 				return debugPrint(ui, err)
 			}
-			defer r.Close()
-			return debugPrint(ui, ui.WriteFrom(r))
+			return nil
 		},
 	}
-	lookupCmd.Flags().BoolP("raw", "", false, "Output raw data from APOD API")
+	downloadCmd.Flags().StringP("base-dir", "d", "./apod", "Base directory for daownload")
+	downloadCmd.Flags().BoolP("include-nopd", "", false, "Download no public domain images or videos")
+	downloadCmd.Flags().BoolP("overwrite", "", false, "Overwrite Download files")
 
-	return lookupCmd
+	//Bind config file
+	_ = viper.BindPFlag("base-dir", downloadCmd.Flags().Lookup("base-dir"))
+	_ = viper.BindPFlag("include-nopd", downloadCmd.Flags().Lookup("include-nopd"))
+	_ = viper.BindPFlag("overwrite", downloadCmd.Flags().Lookup("overwrite"))
+
+	return downloadCmd
 }
 
 /* MIT License
