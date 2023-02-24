@@ -75,7 +75,7 @@ func newRootCmd(ui *rwi.RWI, args []string) *cobra.Command {
 	return rootCmd
 }
 
-func makeAPODConfig() (*apod.Context, error) {
+func makeAPODConfig() (*apod.Request, error) {
 	date, err := nasaapi.DateFrom(viper.GetString("date"))
 	if err != nil {
 		return nil, errs.Wrap(err)

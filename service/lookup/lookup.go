@@ -11,11 +11,11 @@ import (
 
 // Lookup is configuration for lookup command.
 type Lookup struct {
-	*apod.Context
+	*apod.Request
 }
 
 // New returns new Lookup instance.
-func New(cfg *apod.Context) *Lookup {
+func New(cfg *apod.Request) *Lookup {
 	return &Lookup{cfg}
 }
 

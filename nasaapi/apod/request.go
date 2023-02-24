@@ -15,8 +15,8 @@ import (
 
 const APIPath = "/planetary/apod"
 
-// Context is for context of APOD API.
-type Context struct {
+// Request is for context of APOD API.
+type Request struct {
 	Date      nasaapi.Date `json:"date,omitempty"`       // The date of the APOD image to retrieve
 	StartDate nasaapi.Date `json:"start_date,omitempty"` // The start of a date range, when requesting date for a range of dates. Cannot be used with date.
 	EndDate   nasaapi.Date `json:"end_date,omitempty"`   // The end of the date range, when used with start_date.
@@ -25,65 +25,65 @@ type Context struct {
 	APIKey    string       `json:"api_key"`              // api.nasa.gov key for expanded usage
 }
 
-type Opts func(*Context)
+type Opts func(*Request)
 
-// New returns new Context instance for APOD API.
-func New(opts ...Opts) *Context {
-	ctx := &Context{}
+// New returns new Request instance for APOD API.
+func New(opts ...Opts) *Request {
+	ctx := &Request{}
 	for _, opt := range opts {
 		opt(ctx)
 	}
 	return ctx
 }
 
-// WithDate returns function for setting Context.Date.
+// WithDate returns function for setting Request.Date.
 func WithDate(date nasaapi.Date) Opts {
-	return func(ctx *Context) {
+	return func(ctx *Request) {
 		if ctx != nil {
 			ctx.Date = date
 		}
 	}
 }
 
-// WithStartDate returns function for setting Context.StartDate.
+// WithStartDate returns function for setting Request.StartDate.
 func WithStartDate(startDate nasaapi.Date) Opts {
-	return func(ctx *Context) {
+	return func(ctx *Request) {
 		if ctx != nil {
 			ctx.StartDate = startDate
 		}
 	}
 }
 
-// WithEndDate returns function for setting Context.EndDate.
+// WithEndDate returns function for setting Request.EndDate.
 func WithEndDate(endDate nasaapi.Date) Opts {
-	return func(ctx *Context) {
+	return func(ctx *Request) {
 		if ctx != nil {
 			ctx.EndDate = endDate
 		}
 	}
 }
 
-// WithCount returns function for setting Context.Count.
+// WithCount returns function for setting Request.Count.
 func WithCount(count int) Opts {
-	return func(ctx *Context) {
+	return func(ctx *Request) {
 		if ctx != nil {
 			ctx.Count = count
 		}
 	}
 }
 
-// WithThumbs returns function for setting Context.Thumbs.
+// WithThumbs returns function for setting Request.Thumbs.
 func WithThumbs(thumbs bool) Opts {
-	return func(ctx *Context) {
+	return func(ctx *Request) {
 		if ctx != nil {
 			ctx.Thumbs = thumbs
 		}
 	}
 }
 
-// WithAPIKey returns function for setting Context.APIKey.
+// WithAPIKey returns function for setting Request.APIKey.
 func WithAPIKey(apiKey string) Opts {
-	return func(ctx *Context) {
+	return func(ctx *Request) {
 		if ctx != nil {
 			ctx.APIKey = apiKey
 		}
@@ -91,7 +91,7 @@ func WithAPIKey(apiKey string) Opts {
 }
 
 // Encode returns JSON string.
-func (apod *Context) Encode() (string, error) {
+func (apod *Request) Encode() (string, error) {
 	b, err := json.Marshal(apod)
 	if err != nil {
 		return "", errs.Wrap(err)
@@ -100,7 +100,7 @@ func (apod *Context) Encode() (string, error) {
 }
 
 // Stringger method.
-func (apod *Context) String() string {
+func (apod *Request) String() string {
 	s, err := apod.Encode()
 	if err != nil {
 		return ""
@@ -109,7 +109,7 @@ func (apod *Context) String() string {
 }
 
 // Get method gets APOD data from NASA API, and returns []Response instance.
-func (apod *Context) Get(ctx context.Context) ([]Response, error) {
+func (apod *Request) Get(ctx context.Context) ([]Response, error) {
 	resp, err := apod.GetRawData(ctx)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (apod *Context) Get(ctx context.Context) ([]Response, error) {
 }
 
 // GetRawData method gets APOD data from NASA API, and returns raw response string.
-func (apod *Context) GetRawData(ctx context.Context) (io.ReadCloser, error) {
+func (apod *Request) GetRawData(ctx context.Context) (io.ReadCloser, error) {
 	q, err := apod.makeQuery()
 	if err != nil {
 		return nil, errs.Wrap(err)
@@ -127,7 +127,7 @@ func (apod *Context) GetRawData(ctx context.Context) (io.ReadCloser, error) {
 	return nasaapi.Request(ctx, APIPath, q)
 }
 
-func (apod *Context) isSingle() bool {
+func (apod *Request) isSingle() bool {
 	if !apod.Date.IsZero() {
 		return true
 	}
@@ -137,7 +137,7 @@ func (apod *Context) isSingle() bool {
 	return false
 }
 
-func (apod *Context) makeQuery() (url.Values, error) {
+func (apod *Request) makeQuery() (url.Values, error) {
 	v := url.Values{}
 	if !apod.Date.IsZero() {
 		if !apod.StartDate.IsZero() || !apod.EndDate.IsZero() || apod.Count > 0 {
@@ -153,13 +153,13 @@ func (apod *Context) makeQuery() (url.Values, error) {
 	}
 	if !apod.EndDate.IsZero() {
 		if apod.StartDate.IsZero() || !apod.Date.IsZero() || apod.Count > 0 {
-			return nil, errs.Wrap(ecode.ErrCombination, errs.WithContext("context", apod))
+			return nil, errs.Wrap(ecode.ErrCombination, errs.WithContext("config", apod))
 		}
 		v.Set("end_date", apod.EndDate.Format(time.DateOnly))
 	}
 	if apod.Count > 0 {
 		if !apod.Date.IsZero() || !apod.StartDate.IsZero() || !apod.EndDate.IsZero() {
-			return nil, errs.Wrap(ecode.ErrCombination, errs.WithContext("context", apod))
+			return nil, errs.Wrap(ecode.ErrCombination, errs.WithContext("config", apod))
 		}
 		v.Set("count", strconv.Itoa(apod.Count))
 	}
